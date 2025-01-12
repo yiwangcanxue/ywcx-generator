@@ -16,22 +16,23 @@ public class MainGenerator {
      * @throws IOException
      */
     public static void doGenerate(Object model) throws TemplateException, IOException {
-        // 整个项目的根路径
+
         String projectPath = System.getProperty("user.dir");
 
-        String parentPath = projectPath + File.separator + "ywcx-generator-basic";
+        // 整个项目的根路径
+        File parentPath = new File(projectPath).getParentFile();
 
         // 输入路径
-        String inputPath = new File(projectPath, "ywcx-generator-demo-projects/acm-template").getAbsolutePath();
+        String inputPath = new File(parentPath, "ywcx-generator-demo-projects/acm-template").getAbsolutePath();
 
         String outputPath = projectPath;
 
         // 生成静态文件
         StaticGenerator.copyFilesByHutool(inputPath, outputPath);
         // 生成动态文件
-        String inputDynamicFilePath = parentPath + File.separator + "src/main/resources/templates/MainTemplate.java.ftl";
+        String inputDynamicFilePath = projectPath + File.separator + "src/main/resources/templates/MainTemplate.java.ftl";
 
-        String outputDynamicFilePath = projectPath + File.separator + "acm-template/src/com/ywcx/acm/MainTemplate.java";
+        String outputDynamicFilePath = outputPath + File.separator + "acm-template/src/com/ywcx/acm/MainTemplate.java";
 
         DynamicGenerator.doGenerate(inputDynamicFilePath, outputDynamicFilePath, model);
     }
