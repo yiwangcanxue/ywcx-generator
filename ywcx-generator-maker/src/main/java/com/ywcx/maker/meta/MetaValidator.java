@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MetaValidator {
     public static void doValidAndFill(Meta meta) {
@@ -32,6 +33,19 @@ public class MetaValidator {
             return;
         }
         for (Meta.ModelConfig.ModelInfo modelInfo : modelInfoList) {
+            //为group分组，不校验
+            String groupKey = modelInfo.getGroupKey();
+            if (StrUtil.isEmpty(groupKey)) {
+                // 生成中间参数
+                List<Meta.ModelConfig.ModelInfo> subModelInfoList = modelInfo.getModels();
+                String allArgsStr = subModelInfoList.stream()
+                        .map(subModelInfo ->
+                                String.format("\"--%s\"", subModelInfo.getFieldName())
+                        ).collect(Collectors.joining(","));
+                modelInfo.setAllArgsStr(allArgsStr);
+                continue;
+            }
+
             String fieldName = modelInfo.getFieldName();
             if (StrUtil.isBlank(fieldName)) {
                 throw new MetaException("未填写 fieldName");
@@ -54,7 +68,7 @@ public class MetaValidator {
             throw new MetaException("未填写 sourceRootPath");
         }
         String inputRootPath = fileConfig.getInputRootPath();
-        String defaultInputRootPath = ".source/" + File.separator + FileUtil.getLastPathEle(Paths.get(sourceRootPath)).getFileName().toString();
+        String defaultInputRootPath = ".source/" + FileUtil.getLastPathEle(Paths.get(sourceRootPath)).getFileName().toString();
         if (StrUtil.isEmpty(inputRootPath)) {
             fileConfig.setInputRootPath(defaultInputRootPath);
         }
@@ -73,6 +87,10 @@ public class MetaValidator {
             return;
         }
         for (Meta.FileConfig.FileInfo fileInfo : fileInfoList) {
+            String type = fileInfo.getType();
+            if (FileTypeEnum.GROUP.getValue().equals(type)) {
+                continue;
+            }
             String inputPath = fileInfo.getInputPath();
             if (StrUtil.isBlank(inputPath)) {
                 throw new MetaException("未填写 inputPath");
@@ -81,7 +99,7 @@ public class MetaValidator {
             if (StrUtil.isEmpty(outputPath)) {
                 fileInfo.setOutputPath(inputPath);
             }
-            String type = fileInfo.getType();
+
             if (StrUtil.isBlank(type)) {
                 if (StrUtil.isBlank(FileUtil.getSuffix(inputPath))) {
                     fileInfo.setType(FileTypeEnum.DIR.getValue());
